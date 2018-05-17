@@ -11,21 +11,12 @@
 #include <Shlwapi.h>
 #include <comdef.h>
 #include <atlstr.h> 
+#include <string>
 
 using namespace std;
 
-/*
-This program will allow you to change any applications volume.
-
-It finds the ID for the application you want to change, then finds all the applications that show up in the mixer.
-Compares those IDs to the yours and changes the volume.
-
-With some easy modification this could be used to change the system Master Volume, there's a commented out line for that.
-*/
-
-
-DWORD MyGetProcessId(LPCTSTR);
-bool ChangeVolume(float, DWORD);
+DWORD MyGetProcessId(string);
+bool ChangeVolume(float, string);
 float getVolumeAdd(float, float, float);
 
 const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
@@ -44,17 +35,10 @@ int main()
 {
 	/* must be from 0.0 to 1.0 */
 	float volumeIncrease = .05;
-
-	LPCTSTR program = "Chrome.exe";
-	DWORD applicationID = MyGetProcessId(program);
-
-	std::cout << applicationID << " pid" << std::endl;
-	if (applicationID == 0) { printf("error 1"); getchar(); }//error
+	string program = "Chrome.exe";
 
 	//ChangeVolume(volumeIncrease, pid);
-
-
-	while (ChangeVolume(volumeIncrease, applicationID))
+	while (ChangeVolume(volumeIncrease, program))
 	{
 		/* So the increments can be observed */
 		Sleep(250);
@@ -73,8 +57,9 @@ cout << err.ErrorMessage() << endl;
 
 
 /* Gets the process ID of the program to modify */
-DWORD MyGetProcessId(LPCTSTR ProcessName) // non-conflicting function name
+DWORD MyGetProcessId(string inputProcess) // non-conflicting function name
 {
+	LPCTSTR ProcessName = inputProcess.c_str();
 	PROCESSENTRY32 pt;
 	HANDLE hsnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	pt.dwSize = sizeof(PROCESSENTRY32);
@@ -93,9 +78,9 @@ DWORD MyGetProcessId(LPCTSTR ProcessName) // non-conflicting function name
 
 
 
-bool ChangeVolume(float deltaVolume, DWORD pid)
+bool ChangeVolume(float deltaVolume, string program)
 {
-
+	DWORD                    pid;
 	HRESULT                  hr;
 	IMMDeviceEnumerator     *pEnumerator = NULL;
 	ISimpleAudioVolume      *pVolume = NULL;
@@ -110,7 +95,7 @@ bool ChangeVolume(float deltaVolume, DWORD pid)
 	IMMDevice               *pDeviceMaster = NULL;
 	/****************************************************************/
 
-
+	pid = MyGetProcessId(program);
 
 	// Get the device enumerator and initialize the application for COM
 	//CoInitialize is a required call before CoCreateInstance
